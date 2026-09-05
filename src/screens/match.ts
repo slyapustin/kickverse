@@ -1,5 +1,5 @@
 import { el } from '../ui';
-import { save, persist, squadPlayers, autoSquad, squadRating } from '../state';
+import { save, persist, squadPlayers, autoSquad, squadRating, recordMatch } from '../state';
 import { PLAYERS, CLUBS, type PlayerDef, type Position } from '../data/players';
 import { Match, type Input, type Phase } from '../game/engine';
 import { Renderer } from '../game/render';
@@ -29,7 +29,7 @@ export function matchScreen(go: (s: string) => void): HTMLElement {
   if (squadPlayers().some(p => !p)) autoSquad();
   const homeDefs = squadPlayers().filter((p): p is PlayerDef => !!p);
   const rating = squadRating();
-  const opp = buildOpponent(Math.max(55, rating - 4 + Math.floor(Math.random() * 6)));
+  const opp = buildOpponent(Math.max(55, rating - 10 + Math.floor(Math.random() * 6)));
 
   // ---- Input ----
   const input: Input = { dx: 0, dz: 0, pass: false, shoot: false, dribble: false, sprint: false };
@@ -84,8 +84,8 @@ export function matchScreen(go: (s: string) => void): HTMLElement {
     if (!aborted) {
       const [h, a] = match.score;
       const reward = h > a ? 500 : h === a ? 250 : 100;
-      if (h > a) save.wins++; else if (h === a) save.draws++; else save.losses++;
       save.coins += reward; persist();
+      recordMatch({ home: h, away: a, opponent: match.away.name, date: new Date().toISOString() });
       const back = el('button', 'primary big', 'В меню'); back.onclick = () => go('menu');
       const packs = el('button', 'gold', '🎁 Открыть паки'); packs.onclick = () => go('packs');
       showOverlay(`<h2>${h > a ? '🏆 ПОБЕДА!' : h === a ? '🤝 НИЧЬЯ' : '😢 ПОРАЖЕНИЕ'}</h2><div class="score">${h} : ${a}</div><div>${match.home.name} — ${match.away.name}</div><div style="font-size:24px;color:#ffcc33">+${reward} 🪙</div>`, [back, packs]);
@@ -105,6 +105,7 @@ export function matchScreen(go: (s: string) => void): HTMLElement {
   let commTimer = 0;
   setCommentaryListener(t => { comm.textContent = '🎙 ' + t; comm.style.opacity = '1'; window.clearTimeout(commTimer); commTimer = window.setTimeout(() => (comm.style.opacity = '0'), 2600); });
   startCrowd();
+  if ('speechSynthesis' in window) { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); }
 
   const renderer = new Renderer(canvas);
   const ro = new ResizeObserver(() => renderer.resize()); ro.observe(root);

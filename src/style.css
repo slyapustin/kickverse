@@ -125,3 +125,14 @@ button:disabled { opacity: .45; cursor: not-allowed; filter: none; }
 .overlay .score { font-size: 72px; font-weight: 900; color: var(--accent2); }
 .keys { color: var(--muted); font-size: 14px; position: absolute; bottom: 118px; left: 50%; transform: translateX(-50%); text-align: center; pointer-events: none; }
 @media (max-width: 720px) { .keys { display: none; } .logo { font-size: 52px; } }
+
+/* Touch devices (iPad) */
+html, body { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
+.match, .controls, .controls * { touch-action: none; }
+.controls { bottom: calc(14px + env(safe-area-inset-bottom)); padding-left: calc(16px + env(safe-area-inset-left)); padding-right: calc(16px + env(safe-area-inset-right)); }
+.hud { top: calc(10px + env(safe-area-inset-top)); }
+.commentary { top: calc(64px + env(safe-area-inset-top)); }
+.topbar { padding-top: calc(12px + env(safe-area-inset-top)); }
+@media (hover: none) and (pointer: coarse) { .keys { display: none; } }
+.history { display: flex; flex-direction: column; gap: 6px; font-size: 15px; color: var(--muted); }
+.history .win { color: var(--accent); } .history .loss { color: var(--danger); } .history .draw { color: var(--accent2); }

@@ -36,7 +36,7 @@ const FORMATION_433: [number, number][] = [
   [4, -22], [8, 0], [4, 22],
 ];
 
-const speedOf = (p: Player) => 5.2 + (p.def.pace / 100) * 3.2;
+const speedOf = (p: Player) => (5.2 + (p.def.pace / 100) * 3.2) * (p.team.attackDir === -1 ? 0.9 : 1);
 
 export class Match {
   ball: Ball = { x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0, owner: null, lastTeam: null, lastKicker: null };
@@ -163,7 +163,7 @@ export class Match {
     const b = this.ball;
     this.aiTimer -= dt;
     const decide = this.aiTimer <= 0;
-    if (decide) this.aiTimer = 0.35 + Math.random() * 0.3;
+    if (decide) this.aiTimer = 0.5 + Math.random() * 0.4;
 
     for (const t of [this.home, this.away]) {
       const opp = t === this.home ? this.away : this.home;
@@ -188,7 +188,7 @@ export class Match {
           let nearestOpp = Infinity;
           for (const o of opp.players) nearestOpp = Math.min(nearestOpp, Math.hypot(o.x - p.x, o.z - p.z));
           if (decide) {
-            const shootChance = distGoal < 16 ? 0.7 : distGoal < 26 ? 0.25 : 0;
+            const shootChance = distGoal < 14 ? 0.45 : distGoal < 22 ? 0.12 : 0;
             if (Math.random() < shootChance) { this.shoot(p); continue; }
             if (nearestOpp < 3.5 && Math.random() < 0.75) {
               const dirV: [number, number] = [t.attackDir, (Math.random() - 0.5)];
@@ -251,7 +251,7 @@ export class Match {
     // Save: ball airborne or rolling, heading at the goal, within reach.
     if (!b.owner && Math.abs(b.x - gk.x) < 1.6 && Math.abs(b.z - gk.z) < 1.9 + gk.def.defending / 60 && b.y < GOAL_H + 0.3 && Math.sign(b.vx) === -t.attackDir && Math.hypot(b.vx, b.vz) > 4) {
       const power = Math.hypot(b.vx, b.vz);
-      const saveChance = 0.55 + gk.def.rating / 250 - power / 120;
+      const saveChance = (gk.team === this.home ? 0.72 : 0.5) + gk.def.rating / 250 - power / 120;
       if (Math.random() < saveChance) {
         b.vx = t.attackDir * (6 + Math.random() * 6); b.vz = (Math.random() - 0.5) * 12; b.vy = 3 + Math.random() * 3;
         b.lastTeam = t; b.lastKicker = gk; gk.cooldown = 0.8;
@@ -304,7 +304,8 @@ export class Match {
   private shoot(p: Player) {
     const b = this.ball; const goalX = HALF_L * p.team.attackDir;
     const dist = Math.hypot(goalX - b.x, b.z);
-    const spread = (1.15 - p.def.shooting / 100) * (2.5 + dist / 10);
+    const aiPenalty = p.team === this.away ? 1.8 : 1;
+    const spread = (1.15 - p.def.shooting / 100) * (2.5 + dist / 10) * aiPenalty;
     const tz = (Math.random() - 0.5) * 2 * (GOAL_HALF * 0.8) + (Math.random() - 0.5) * spread;
     const ang = Math.atan2(tz - b.z, goalX - b.x);
     const power = 22 + p.def.shooting / 100 * 12;

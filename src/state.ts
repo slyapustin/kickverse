@@ -6,7 +6,9 @@ export interface SaveData {
   squad: (string | null)[];             // 11 slots, formation 4-3-3
   wins: number; draws: number; losses: number;
   packsOpened: number;
+  history?: MatchResult[];        // most recent first, max 10
 }
+export interface MatchResult { home: number; away: number; opponent: string; date: string; }
 
 // Slot layout: 0 GK, 1-4 DEF, 5-7 MID, 8-10 FWD
 export const SLOT_POS: Position[] = ['GK', 'DEF', 'DEF', 'DEF', 'DEF', 'MID', 'MID', 'MID', 'FWD', 'FWD', 'FWD'];
@@ -41,6 +43,12 @@ function load(): SaveData {
 export function persist() { localStorage.setItem(KEY, JSON.stringify(save)); }
 
 export function resetSave() { save = defaultSave(); persist(); }
+
+export function recordMatch(r: MatchResult) {
+  save.history = [r, ...(save.history ?? [])].slice(0, 10);
+  if (r.home > r.away) save.wins++; else if (r.home === r.away) save.draws++; else save.losses++;
+  persist();
+}
 
 export function addCard(id: string) { save.collection[id] = (save.collection[id] ?? 0) + 1; }
 

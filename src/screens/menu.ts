@@ -17,6 +17,16 @@ export function menuScreen(go: (s: string) => void): HTMLElement {
   voice.onclick = () => { setCommentatorEnabled(!isCommentatorEnabled()); voice.textContent = isCommentatorEnabled() ? '🔊 Комментатор: вкл' : '🔇 Комментатор: выкл'; };
   btns.append(play, packs, squad, col, voice);
   root.appendChild(btns);
+  const hist = save.history ?? [];
+  if (hist.length) {
+    const h = el('div', 'history', '<b style="color:#fff">Последние матчи</b>');
+    for (const r of hist.slice(0, 5)) {
+      const cls = r.home > r.away ? 'win' : r.home === r.away ? 'draw' : 'loss';
+      const d = new Date(r.date);
+      h.appendChild(el('div', '', `<span class="${cls}">${r.home}:${r.away}</span> — ${r.opponent} <span style="opacity:.6">· ${d.toLocaleDateString('ru-RU')}</span>`));
+    }
+    root.appendChild(h);
+  }
   const reset = el('button', '', 'Сбросить прогресс'); reset.style.fontSize = '13px'; reset.style.padding = '8px 12px'; reset.style.opacity = '.6';
   let armed = false;
   reset.onclick = () => { if (!armed) { armed = true; reset.textContent = 'Точно сбросить? Нажми ещё раз'; reset.style.opacity = '1'; setTimeout(() => { armed = false; reset.textContent = 'Сбросить прогресс'; reset.style.opacity = '.6'; }, 3000); return; } resetSave(); go('menu'); };
