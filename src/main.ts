@@ -1,3 +1,4 @@
+import { checkForUpdate } from './update';
 import { menuScreen } from './screens/menu';
 import { packsScreen } from './screens/packs';
 import { squadScreen } from './screens/squad';
@@ -20,3 +21,5 @@ function go(screen: string) {
 }
 
 go('menu');
+
+checkForUpdate();

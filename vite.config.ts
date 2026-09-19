@@ -9,8 +9,21 @@ function gitSha(): string {
 }
 const buildDate = new Date().toISOString().slice(0, 16).replace('T', ' ');
 
+// Emit a tiny, always-fresh manifest the app can poll to detect that the HTML
+// it is running from is stale. GitHub Pages serves index.html with max-age=600
+// and an installed iOS web app can hold it far longer than that.
+function versionManifest(sha: string, time: string) {
+  return {
+    name: 'kickverse-version-manifest',
+    generateBundle(this: { emitFile: (f: { type: 'asset'; fileName: string; source: string }) => void }) {
+      this.emitFile({ type: 'asset', fileName: 'version.json', source: JSON.stringify({ build: sha, time }) });
+    },
+  };
+}
+
 export default defineConfig({
   base: './',
+  plugins: [versionManifest(gitSha(), buildDate)],
   define: {
     __BUILD_ID__: JSON.stringify(gitSha()),
     __BUILD_TIME__: JSON.stringify(buildDate),
