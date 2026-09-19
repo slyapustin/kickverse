@@ -1,13 +1,21 @@
 import { el } from '../ui';
-import { save, squadRating, resetSave } from '../state';
+import { save, squadRating, resetSave, isSaveHealthy } from '../state';
 import { setCommentatorEnabled, isCommentatorEnabled } from '../audio/commentator';
+import { menuIntro } from './intro';
 
 export function menuScreen(go: (s: string) => void): HTMLElement {
-  const root = el('div', 'screen center');
+  const root = el('div', 'screen center menu-screen');
+  const intro = menuIntro();
+  root.appendChild(intro);
   root.appendChild(el('div', 'logo', 'KICKVERSE'));
   root.appendChild(el('div', 'subtitle', 'Собирай карточки. Усиливай состав. Побеждай.'));
   const stats = el('div', 'stat', `🪙 ${save.coins} &nbsp;·&nbsp; Рейтинг состава: <b style="color:#fff">${squadRating()}</b> &nbsp;·&nbsp; Матчи: ${save.wins}П ${save.draws}Н ${save.losses}Пр`);
   root.appendChild(stats);
+  if (!isSaveHealthy()) {
+    const warn = el('div', 'stat', '⚠️ Прогресс не сохраняется — проверь настройки хранилища браузера.');
+    warn.style.color = '#ff5c6c';
+    root.appendChild(warn);
+  }
   const btns = el('div', 'menu-buttons');
   const play = el('button', 'primary big', '▶ PLAY'); play.onclick = () => go('match');
   const packs = el('button', 'gold', '🎁 Открыть паки'); packs.onclick = () => go('packs');
@@ -31,5 +39,6 @@ export function menuScreen(go: (s: string) => void): HTMLElement {
   let armed = false;
   reset.onclick = () => { if (!armed) { armed = true; reset.textContent = 'Точно сбросить? Нажми ещё раз'; reset.style.opacity = '1'; setTimeout(() => { armed = false; reset.textContent = 'Сбросить прогресс'; reset.style.opacity = '.6'; }, 3000); return; } resetSave(); go('menu'); };
   root.appendChild(reset);
+  (root as any)._cleanup = () => (intro as any)._cleanup?.();
   return root;
 }

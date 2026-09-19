@@ -136,3 +136,14 @@ html, body { -webkit-touch-callout: none; -webkit-user-select: none; user-select
 @media (hover: none) and (pointer: coarse) { .keys { display: none; } }
 .history { display: flex; flex-direction: column; gap: 6px; font-size: 15px; color: var(--muted); }
 .history .win { color: var(--accent); } .history .loss { color: var(--danger); } .history .draw { color: var(--accent2); }
+
+/* Menu attract scene: cartoon players chasing a loose ball behind the buttons. */
+.menu-screen { position: relative; overflow: hidden; }
+.intro-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+.menu-screen > *:not(.intro-canvas) { position: relative; z-index: 1; }
+
+/* Collection filters + out-of-position marking in the squad builder. */
+.chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; padding: 6px 10px; }
+.chip { padding: 10px 18px; font-size: 15px; border-radius: 999px; min-height: 44px; }
+.chip.on { background: var(--accent); color: #06210f; font-weight: 800; }
+.card.offpos { opacity: .5; }

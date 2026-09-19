@@ -1,4 +1,19 @@
 import { HALF_L, HALF_W, type Match, type Player } from './engine';
+import { drawFigure, pickHair, pickSkin } from './figure';
+
+// Skin/hair are derived from the player id so a given footballer always looks
+// the same, in the match and on the menu.
+const lookCache = new Map<string, { skin: string; hair: string }>();
+function lookOf(p: Player) {
+  let v = lookCache.get(p.def.id);
+  if (!v) {
+    let n = 0;
+    for (let i = 0; i < p.def.id.length; i++) n = (n * 31 + p.def.id.charCodeAt(i)) | 0;
+    v = { skin: pickSkin(n), hair: pickHair(n >> 3) };
+    lookCache.set(p.def.id, v);
+  }
+  return v;
+}
 
 // Broadcast-style side camera: we look across the pitch from the near touchline, slightly elevated.
 export class Renderer {
@@ -139,42 +154,33 @@ export class Renderer {
 
   private drawPlayer(c: CanvasRenderingContext2D, p: Player, m: Match) {
     const g = this.proj(p.x, p.z, 0, m.camX);
-    const s = g.s; const h = s * 1.8; const w = s * 0.55;
+    const s = g.s; const h = s * 2.1; const w = s * 0.55;
     if (g.sx < -60 || g.sx > this.W + 60) return;
     const isCtl = p === m.controlled; const hasBall = m.ball.owner === p;
+    const kit = p.isGK ? '#ff2bd1' : p.team.kit;
+    const shorts = p.isGK ? '#1b1b22' : (p.team.kit2 === '#ffffff' && p.team.kit !== '#ffffff' ? '#ffffff' : p.team.kit2);
     // Shadow
     c.fillStyle = 'rgba(0,0,0,0.35)'; c.beginPath(); c.ellipse(g.sx, g.sy, w * 1.1, w * 0.45, 0, 0, 6.28); c.fill();
     if (isCtl) { c.strokeStyle = '#35d07f'; c.lineWidth = 3; c.beginPath(); c.ellipse(g.sx, g.sy, w * 1.6, w * 0.7, 0, 0, 6.28); c.stroke(); }
     else if (hasBall) { c.strokeStyle = 'rgba(255,255,255,0.7)'; c.lineWidth = 2; c.beginPath(); c.ellipse(g.sx, g.sy, w * 1.4, w * 0.6, 0, 0, 6.28); c.stroke(); }
-    // Legs
-    const moving = Math.hypot(p.vx, p.vz) > 0.3; const swing = moving ? Math.sin(p.animT * 6) * w * 0.7 : 0;
-    const kit = p.isGK ? '#111' : p.team.kit; const shorts = p.isGK ? '#333' : (p.team.kit2 === '#ffffff' && p.team.kit !== '#ffffff' ? '#ffffff' : p.team.kit2);
-    c.strokeStyle = '#f1c27d'; c.lineWidth = Math.max(2, w * 0.35); c.lineCap = 'round';
-    c.beginPath(); c.moveTo(g.sx - w * 0.3, g.sy - h * 0.45); c.lineTo(g.sx - w * 0.3 + swing, g.sy - 1); c.stroke();
-    c.beginPath(); c.moveTo(g.sx + w * 0.3, g.sy - h * 0.45); c.lineTo(g.sx + w * 0.3 - swing, g.sy - 1); c.stroke();
-    // Shorts
-    c.fillStyle = shorts; c.fillRect(g.sx - w * 0.6, g.sy - h * 0.62, w * 1.2, h * 0.2);
-    // Shirt
-    c.fillStyle = kit; this.rr(c, g.sx - w * 0.7, g.sy - h, w * 1.4, h * 0.42, w * 0.3); c.fill();
-    if (p.isGK) { c.fillStyle = '#ffd400'; c.fillRect(g.sx - w * 0.7, g.sy - h + h * 0.18, w * 1.4, h * 0.06); }
-    // Arms
-    c.strokeStyle = kit; c.lineWidth = Math.max(2, w * 0.3);
-    c.beginPath(); c.moveTo(g.sx - w * 0.7, g.sy - h * 0.95); c.lineTo(g.sx - w * 1.0 - swing * 0.5, g.sy - h * 0.6); c.stroke();
-    c.beginPath(); c.moveTo(g.sx + w * 0.7, g.sy - h * 0.95); c.lineTo(g.sx + w * 1.0 + swing * 0.5, g.sy - h * 0.6); c.stroke();
-    // Head
-    c.fillStyle = '#f1c27d'; c.beginPath(); c.arc(g.sx, g.sy - h * 1.15, w * 0.5, 0, 6.28); c.fill();
-    c.fillStyle = '#3b2314'; c.beginPath(); c.arc(g.sx, g.sy - h * 1.22, w * 0.5, Math.PI, 0); c.fill();
-    // Number
-    c.fillStyle = p.team.kit === '#ffffff' ? '#000' : '#fff'; c.font = `bold ${Math.max(8, s * 0.42)}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
-    c.fillText(String(p.idx + 1), g.sx, g.sy - h * 0.8);
+    // Body: shared with the menu attract scene so both look the same.
+    const look = lookOf(p);
+    c.save();
+    drawFigure(c, {
+      sx: g.sx, sy: g.sy, s,
+      kit, kit2: shorts, skin: look.skin, hair: look.hair,
+      num: p.idx + 1, gait: p.animT * 6,
+      speed: Math.hypot(p.vx, p.vz), dir: Math.sign(p.vx) || m.home.attackDir,
+    });
+    c.restore();
     // Name label for controlled / ball owner
     if (isCtl || hasBall) {
       c.font = `bold ${Math.max(10, s * 0.5)}px sans-serif`;
       const label = p.def.short; const tw = c.measureText(label).width + 12;
       c.fillStyle = isCtl ? 'rgba(53,208,127,0.95)' : 'rgba(0,0,0,0.6)';
-      this.rr(c, g.sx - tw / 2, g.sy - h * 1.75 - 10, tw, 20, 6); c.fill();
-      c.fillStyle = isCtl ? '#06210f' : '#fff'; c.fillText(label, g.sx, g.sy - h * 1.75);
-      if (isCtl) { c.fillStyle = '#35d07f'; c.beginPath(); c.moveTo(g.sx, g.sy - h * 1.5); c.lineTo(g.sx - 6, g.sy - h * 1.62); c.lineTo(g.sx + 6, g.sy - h * 1.62); c.fill(); }
+      this.rr(c, g.sx - tw / 2, g.sy - h * 1.12 - 10, tw, 20, 6); c.fill();
+      c.fillStyle = isCtl ? '#06210f' : '#fff'; c.fillText(label, g.sx, g.sy - h * 1.12);
+      if (isCtl) { c.fillStyle = '#35d07f'; c.beginPath(); c.moveTo(g.sx, g.sy - h * 1.0); c.lineTo(g.sx - 6, g.sy - h * 1.07); c.lineTo(g.sx + 6, g.sy - h * 1.07); c.fill(); }
     }
     // Stamina bar for controlled
     if (isCtl) { c.fillStyle = 'rgba(0,0,0,0.5)'; c.fillRect(g.sx - 15, g.sy + 6, 30, 4); c.fillStyle = p.stamina > 0.3 ? '#35d07f' : '#ff5c6c'; c.fillRect(g.sx - 15, g.sy + 6, 30 * p.stamina, 4); }

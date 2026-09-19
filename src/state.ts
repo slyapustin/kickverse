@@ -40,7 +40,28 @@ function load(): SaveData {
   return defaultSave();
 }
 
-export function persist() { localStorage.setItem(KEY, JSON.stringify(save)); }
+let saveFailed = false;
+
+/** True once a write has failed — iPadOS can refuse storage (full, or locked down). */
+export function isSaveHealthy() { return !saveFailed; }
+
+export function persist() {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(save));
+    saveFailed = false;
+  } catch (e) {
+    // Never let a storage error break the game loop; surface it on the menu instead.
+    saveFailed = true;
+    console.warn('kickverse: не удалось сохранить прогресс', e);
+  }
+}
+
+// iOS terminates backgrounded home-screen apps without notice, so write on the
+// way out as well as after each event. pagehide is the one iOS reliably fires.
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') persist(); });
+  window.addEventListener('pagehide', persist);
+}
 
 export function resetSave() { save = defaultSave(); persist(); }
 
@@ -51,6 +72,13 @@ export function recordMatch(r: MatchResult) {
 }
 
 export function addCard(id: string) { save.collection[id] = (save.collection[id] ?? 0) + 1; }
+
+export function setSquadSlot(slot: number, id: string | null) {
+  const existing = id ? save.squad.indexOf(id) : -1;
+  if (existing >= 0) save.squad[existing] = save.squad[slot];
+  save.squad[slot] = id;
+  persist();
+}
 
 export function ownedPlayers(): PlayerDef[] {
   return Object.keys(save.collection).map(id => PLAYER_BY_ID[id]).filter(Boolean).sort((a, b) => b.rating - a.rating);
