@@ -228,3 +228,7 @@ export function rarityOf(rating: number): Rarity {
 
 export const POS_NAME: Record<Position, string> = { GK: 'Вратарь', DEF: 'Защитник', MID: 'Полузащитник', FWD: 'Нападающий' };
 export const POS_SHORT: Record<Position, string> = { GK: 'ВР', DEF: 'ЗЩ', MID: 'ПЗ', FWD: 'НП' };
+// English position names — these double as vocabulary the child picks up from
+// the cards themselves, so the abbreviations are the real football ones.
+export const POS_EN: Record<Position, string> = { GK: 'GK', DEF: 'DEF', MID: 'MID', FWD: 'FWD' };
+export const POS_NAME_EN: Record<Position, string> = { GK: 'Goalkeeper', DEF: 'Defender', MID: 'Midfielder', FWD: 'Forward' };

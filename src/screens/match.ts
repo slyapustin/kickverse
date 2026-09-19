@@ -1,4 +1,7 @@
 import { el } from '../ui';
+import { bi, biQuiet } from '../i18n';
+import { buildQuiz, wordsHeardIn } from '../learn';
+import { quizOverlay } from './quiz';
 import { save, persist, squadPlayers, autoSquad, squadRating, recordMatch } from '../state';
 import { PLAYERS, CLUBS, type PlayerDef, type Position } from '../data/players';
 import { Match, type Input, type Phase } from '../game/engine';
@@ -23,7 +26,7 @@ export function matchScreen(go: (s: string) => void): HTMLElement {
   const canvas = el('canvas'); root.appendChild(canvas);
   const hud = el('div', 'hud'); root.appendChild(hud);
   const comm = el('div', 'commentary'); comm.style.opacity = '0'; root.appendChild(comm);
-  root.appendChild(el('div', 'keys', 'Стрелки / WASD — движение · J — пас · K — удар · L — дриблинг · Shift — спринт · Esc — выход'));
+  root.appendChild(el('div', 'keys', 'Arrows / WASD — move · J — pass · K — shoot · L — dribble · Shift — sprint · Esc — exit'));
 
   // Fill empty squad slots automatically so the match always has 11 players.
   if (squadPlayers().some(p => !p)) autoSquad();
@@ -55,7 +58,11 @@ export function matchScreen(go: (s: string) => void): HTMLElement {
   };
   dpad.append(mkBtn('', null), mkBtn('▲', 'up'), mkBtn('', null), mkBtn('◀', 'left'), mkBtn('', null), mkBtn('▶', 'right'), mkBtn('', null), mkBtn('▼', 'down'), mkBtn('', null));
   const actions = el('div', 'actions');
-  actions.append(mkBtn('ПАС', 'pass', 'pass'), mkBtn('УДАР', 'shoot', 'shoot'), mkBtn('ДРИБ-<br>ЛИНГ', 'dribble', 'dribble'), mkBtn('СПРИНТ', 'sprint', 'sprint'));
+  actions.append(
+    mkBtn(biQuiet('PASS', 'пас'), 'pass', 'pass'),
+    mkBtn(biQuiet('SHOOT', 'удар'), 'shoot', 'shoot'),
+    mkBtn(biQuiet('DRIBBLE', 'обводка'), 'dribble', 'dribble'),
+    mkBtn(biQuiet('SPRINT', 'рывок'), 'sprint', 'sprint'));
   controls.append(dpad, actions); root.appendChild(controls);
 
   const readInput = () => {
@@ -86,24 +93,36 @@ export function matchScreen(go: (s: string) => void): HTMLElement {
       const reward = h > a ? 500 : h === a ? 250 : 100;
       save.coins += reward; persist();
       recordMatch({ home: h, away: a, opponent: match.away.name, date: new Date().toISOString() });
-      const back = el('button', 'primary big', 'В меню'); back.onclick = () => go('menu');
-      const packs = el('button', 'gold', '🎁 Открыть паки'); packs.onclick = () => go('packs');
-      showOverlay(`<h2>${h > a ? '🏆 ПОБЕДА!' : h === a ? '🤝 НИЧЬЯ' : '😢 ПОРАЖЕНИЕ'}</h2><div class="score">${h} : ${a}</div><div>${match.home.name} — ${match.away.name}</div><div style="font-size:24px;color:#ffcc33">+${reward} 🪙</div>`, [back, packs]);
+      const title = h > a ? bi('YOU WIN!', 'Победа!') : h === a ? bi('A DRAW', 'Ничья') : bi('YOU LOSE', 'Поражение');
+      const emoji = h > a ? '🏆' : h === a ? '🤝' : '😢';
+      const word = el('button', 'primary big', bi('Word game', 'Игра со словами'));
+      word.onclick = () => {
+        overlay?.remove();
+        overlay = quizOverlay(buildQuiz(heard, save.coins, reward, h, a), () => {
+          overlay?.remove();
+          go('menu');
+        });
+        root.appendChild(overlay);
+      };
+      const back = el('button', '', bi('Menu', 'В меню')); back.onclick = () => go('menu');
+      showOverlay(`<h2>${emoji} ${title}</h2><div class="score">${h} : ${a}</div><div>${match.home.name} — ${match.away.name}</div><div style="font-size:24px;color:#ffcc33">+${reward} 🪙</div>`, [word, back]);
     } else go('menu');
   };
 
-  const match = new Match(homeDefs, opp.defs, 'Моя команда', opp.name, {
+  const match = new Match(homeDefs, opp.defs, 'My team', opp.name, {
     onScore: () => {},
     onPhase: (p: Phase) => {
-      if (p === 'goal') showOverlay(`<h2>⚽ ГОЛ!</h2><div class="score">${match.score[0]} : ${match.score[1]}</div>`);
-      else if (p === 'halftime') showOverlay(`<h2>Перерыв</h2><div class="score">${match.score[0]} : ${match.score[1]}</div>`);
+      if (p === 'goal') showOverlay(`<h2>⚽ ${bi('GOAL!', 'Гол!')}</h2><div class="score">${match.score[0]} : ${match.score[1]}</div>`);
+      else if (p === 'halftime') showOverlay(`<h2>${bi('Half time', 'Перерыв')}</h2><div class="score">${match.score[0]} : ${match.score[1]}</div>`);
       else if (p === 'fulltime') finish(false);
       else { overlay?.remove(); overlay = null; }
     },
   });
 
+  const heard = new Set<string>();
   let commTimer = 0;
-  setCommentaryListener(t => { comm.textContent = '🎙 ' + t; comm.style.opacity = '1'; window.clearTimeout(commTimer); commTimer = window.setTimeout(() => (comm.style.opacity = '0'), 2600); });
+  setCommentaryListener(t => {
+    wordsHeardIn(t, heard); comm.textContent = '🎙 ' + t; comm.style.opacity = '1'; window.clearTimeout(commTimer); commTimer = window.setTimeout(() => (comm.style.opacity = '0'), 2600); });
   startCrowd();
   if ('speechSynthesis' in window) { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); }
 

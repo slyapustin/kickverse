@@ -157,3 +157,27 @@ html, body { -webkit-touch-callout: none; -webkit-user-select: none; user-select
   border: 3px solid rgba(0,0,0,.28); box-shadow: 0 4px 12px rgba(0,0,0,.35);
   background: #1b1b22;
 }
+
+/* ---- Bilingual labels: English large, Russian hint underneath ---- */
+.bi { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.08; vertical-align: middle; }
+.bi .ru { font-size: .60em; font-weight: 600; opacity: .58; letter-spacing: .2px; }
+.en[data-say] { cursor: pointer; }
+.ru-inline { display: block; font-size: 12px; opacity: .6; font-weight: 600; }
+.words-stat { font-size: 15px; }
+/* Action pads are small; keep the hint from crowding the English. */
+.actions .bi .ru { font-size: .52em; opacity: .7; }
+
+/* ---- Post-match word game ---- */
+/* Darker than a normal overlay: this one is read, not glanced at. */
+.quiz { gap: 14px; padding: 20px; background: rgba(6,10,20,.94); }
+.quiz-progress { color: var(--muted); font-size: 14px; letter-spacing: 1px; }
+.quiz-ask { font-size: 20px; max-width: 90vw; }
+.quiz-word {
+  font-size: 34px; font-weight: 900; padding: 14px 28px; letter-spacing: .5px;
+  background: rgba(255,255,255,.08); border: 2px solid rgba(255,255,255,.2);
+}
+.quiz-options { display: flex; flex-direction: column; gap: 12px; width: min(420px, 88vw); }
+.quiz-option { width: 100%; min-height: 56px; font-size: 19px; }
+.quiz-option.right { background: var(--accent); color: #06210f; font-weight: 800; }
+.quiz-option.wrong { background: var(--danger); color: #fff; }
+.quiz-note { font-size: 18px; }

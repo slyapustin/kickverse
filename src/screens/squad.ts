@@ -1,6 +1,7 @@
 import { el, cardEl, topbar } from '../ui';
+import { bi } from '../i18n';
 import { save, ownedPlayers, squadPlayers, autoSquad, squadRating, setSquadSlot, SLOT_POS } from '../state';
-import { POS_SHORT, rarityOf, type Position } from '../data/players';
+import { POS_SHORT, POS_EN, rarityOf, type Position } from '../data/players';
 
 const SLOT_XY: [number, number][] = [
   [50, 90], [14, 70], [38, 74], [62, 74], [86, 70], [25, 46], [50, 50], [75, 46], [20, 18], [50, 14], [80, 18],
@@ -8,16 +9,16 @@ const SLOT_XY: [number, number][] = [
 
 type Filter = 'ALL' | Position;
 const FILTERS: { id: Filter; label: string }[] = [
-  { id: 'ALL', label: 'Все' },
-  { id: 'GK', label: POS_SHORT.GK },
-  { id: 'DEF', label: POS_SHORT.DEF },
-  { id: 'MID', label: POS_SHORT.MID },
-  { id: 'FWD', label: POS_SHORT.FWD },
+  { id: 'ALL', label: bi('All', 'все') },
+  { id: 'GK', label: bi(POS_EN.GK, POS_SHORT.GK) },
+  { id: 'DEF', label: bi(POS_EN.DEF, POS_SHORT.DEF) },
+  { id: 'MID', label: bi(POS_EN.MID, POS_SHORT.MID) },
+  { id: 'FWD', label: bi(POS_EN.FWD, POS_SHORT.FWD) },
 ];
 
 export function squadScreen(go: (s: string) => void, collectionOnly = false): HTMLElement {
   const root = el('div', 'screen');
-  root.appendChild(topbar(collectionOnly ? 'Коллекция' : 'Мой состав', () => go('menu')));
+  root.appendChild(topbar(collectionOnly ? bi('Collection', 'Коллекция') : bi('My team', 'Мой состав'), () => go('menu')));
   const content = el('div', 'content'); root.appendChild(content);
   let active: number | null = null;
   let filter: Filter = 'ALL';
@@ -25,8 +26,8 @@ export function squadScreen(go: (s: string) => void, collectionOnly = false): HT
   const render = () => {
     content.innerHTML = '';
     if (!collectionOnly) {
-      const info = el('div', 'row', `<span class="stat">Рейтинг состава: <b style="color:#fff;font-size:22px">${squadRating()}</b></span>`);
-      const auto = el('button', 'primary', '⚡ Автосостав');
+      const info = el('div', 'row', `<span class="stat">${bi('Team rating', 'Рейтинг состава')}: <b style="color:#fff;font-size:22px">${squadRating()}</b></span>`);
+      const auto = el('button', 'primary', `⚡ ${bi('Auto pick', 'Автосостав')}`);
       auto.onclick = () => { autoSquad(); active = null; render(); };
       info.appendChild(auto); content.appendChild(info);
 
@@ -48,16 +49,16 @@ export function squadScreen(go: (s: string) => void, collectionOnly = false): HT
       content.appendChild(pitch);
 
       if (active === null) {
-        content.appendChild(el('p', 'hint', 'Нажми на позицию на поле, затем выбери карточку из коллекции.'));
+        content.appendChild(el('p', 'hint', bi('Tap a position on the pitch, then choose a card.', 'Нажми на позицию на поле, затем выбери карточку.')));
       } else {
         const bar = el('div', 'row');
-        bar.appendChild(el('span', 'hint', `Позиция ${POS_SHORT[SLOT_POS[active]]}: выбери карточку ниже.`));
+        bar.appendChild(el('span', 'hint', bi(`Position ${POS_EN[SLOT_POS[active]]}: choose a card below.`, `Позиция ${POS_SHORT[SLOT_POS[active]]}: выбери карточку ниже.`)));
         if (save.squad[active]) {
-          const clear = el('button', '', '✕ Освободить');
+          const clear = el('button', '', `✕ ${bi('Clear', 'Освободить')}`);
           clear.onclick = () => { setSquadSlot(active!, null); active = null; filter = 'ALL'; render(); };
           bar.appendChild(clear);
         }
-        const cancel = el('button', '', 'Отмена');
+        const cancel = el('button', '', bi('Cancel', 'Отмена'));
         cancel.onclick = () => { active = null; filter = 'ALL'; render(); };
         bar.appendChild(cancel);
         content.appendChild(bar);
@@ -81,10 +82,10 @@ export function squadScreen(go: (s: string) => void, collectionOnly = false): HT
       : [...shown].sort((a, b) => (b.pos === wanted ? 1 : 0) - (a.pos === wanted ? 1 : 0) || b.rating - a.rating);
 
     content.appendChild(el('div', 'stat',
-      `Показано ${list.length} из ${owned.length} карточек`));
+      bi(`Showing ${list.length} of ${owned.length} cards`, `Показано ${list.length} из ${owned.length} карточек`)));
 
     if (!list.length) {
-      content.appendChild(el('p', 'hint', 'На эту позицию карточек пока нет — открой пак.'));
+      content.appendChild(el('p', 'hint', bi('No cards for this position yet — open a pack, or tap All to use another player here.', 'На эту позицию карточек нет — открой пак или нажми «Все», чтобы поставить любого.')));
       return;
     }
 
@@ -92,9 +93,9 @@ export function squadScreen(go: (s: string) => void, collectionOnly = false): HT
     for (const p of list) {
       const c = cardEl(p, save.collection[p.id]);
       const inSquad = save.squad.indexOf(p.id);
-      if (inSquad >= 0) { c.classList.add('selected'); c.title = 'Уже в составе'; }
+      if (inSquad >= 0) { c.classList.add('selected'); c.title = 'In the team — уже в составе'; }
       // Playable out of position, but say so rather than silently allowing it.
-      if (wanted !== null && p.pos !== wanted) { c.classList.add('offpos'); c.title = `Не ${POS_SHORT[wanted]} — сыграет не на своей позиции`; }
+      if (wanted !== null && p.pos !== wanted) { c.classList.add('offpos'); c.title = `Out of position — не ${POS_SHORT[wanted]}`; }
       c.onclick = () => {
         if (collectionOnly || active === null) return;
         setSquadSlot(active, p.id);

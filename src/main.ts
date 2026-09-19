@@ -1,4 +1,5 @@
 import { checkForUpdate } from './update';
+import { sayWord } from './audio/commentator';
 import { menuScreen } from './screens/menu';
 import { packsScreen } from './screens/packs';
 import { squadScreen } from './screens/squad';
@@ -19,6 +20,13 @@ function go(screen: string) {
   }
   app.appendChild(current);
 }
+
+// Tap any English word to hear it. One listener for the whole app, so every
+// bilingual label is tappable without wiring each one up.
+document.addEventListener('click', e => {
+  const t = (e.target as HTMLElement | null)?.closest<HTMLElement>('[data-say]');
+  if (t?.dataset.say) sayWord(t.dataset.say);
+});
 
 go('menu');
 

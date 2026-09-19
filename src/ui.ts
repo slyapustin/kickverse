@@ -1,4 +1,4 @@
-import { COUNTRIES, CLUBS, POS_SHORT, rarityOf, type PlayerDef } from './data/players';
+import { COUNTRIES, CLUBS, POS_EN, rarityOf, type PlayerDef } from './data/players';
 import { save } from './state';
 import { faceFor, faceUrl } from './data/faces';
 
@@ -11,7 +11,7 @@ export function cardEl(p: PlayerDef, count = 0): HTMLElement {
   const e = el('div', `card ${rarityOf(p.rating)}`);
   e.innerHTML = `
     <div style="align-self:stretch;display:flex;justify-content:space-between;align-items:flex-start">
-      <div><div class="rating">${p.rating}</div><div class="pos">${POS_SHORT[p.pos]}</div></div>
+      <div><div class="rating">${p.rating}</div><div class="pos">${POS_EN[p.pos]}</div></div>
       <div style="font-size:26px">${c.flag}</div>
     </div>
     <img class="face-img" src="${faceUrl(faceFor(p.id))}" alt="" loading="lazy"

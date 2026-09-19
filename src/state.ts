@@ -7,6 +7,7 @@ export interface SaveData {
   wins: number; draws: number; losses: number;
   packsOpened: number;
   history?: MatchResult[];        // most recent first, max 10
+  vocab?: Record<string, number>; // english word -> strength 0..5 (spaced repetition)
 }
 export interface MatchResult { home: number; away: number; opponent: string; date: string; }
 
@@ -116,9 +117,9 @@ export function squadRating(): number {
 // ---- Packs ----
 export interface PackDef { id: Rarity; name: string; price: number; cards: number; odds: Record<Rarity, number>; }
 export const PACKS: PackDef[] = [
-  { id: 'bronze', name: 'Бронзовый пак', price: 300,  cards: 3, odds: { bronze: 0.80, silver: 0.18, gold: 0.02 } },
-  { id: 'silver', name: 'Серебряный пак', price: 800, cards: 4, odds: { bronze: 0.35, silver: 0.55, gold: 0.10 } },
-  { id: 'gold',   name: 'Золотой пак',    price: 2000, cards: 5, odds: { bronze: 0.05, silver: 0.55, gold: 0.40 } },
+  { id: 'bronze', name: 'Bronze pack<span class="ru-inline">бронзовый</span>', price: 300,  cards: 3, odds: { bronze: 0.80, silver: 0.18, gold: 0.02 } },
+  { id: 'silver', name: 'Silver pack<span class="ru-inline">серебряный</span>', price: 800, cards: 4, odds: { bronze: 0.35, silver: 0.55, gold: 0.10 } },
+  { id: 'gold',   name: 'Gold pack<span class="ru-inline">золотой</span>',    price: 2000, cards: 5, odds: { bronze: 0.05, silver: 0.55, gold: 0.40 } },
 ];
 
 export function rollPack(pack: PackDef): PlayerDef[] {
