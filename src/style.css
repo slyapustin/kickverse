@@ -186,3 +186,20 @@ html, body { -webkit-touch-callout: none; -webkit-user-select: none; user-select
 .quiz-option.right { background: var(--accent); color: #06210f; font-weight: 800; }
 .quiz-option.wrong { background: var(--danger); color: #fff; }
 .quiz-note { font-size: 18px; }
+
+/* ---- Stars and trophies ---- */
+.stars { font-size: 40px; letter-spacing: 6px; color: #ffcc33; }
+.fresh-trophies { margin-top: 10px; font-size: 17px; color: #ffe08a; line-height: 1.7; }
+.trophy-list { display: flex; flex-direction: column; gap: 10px; max-width: 560px; margin: 14px auto 0; }
+.trophy {
+  display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 14px;
+  background: var(--panel); opacity: .62;
+}
+.trophy.done { opacity: 1; background: linear-gradient(120deg, #2a2410, #3b3316); border: 1px solid rgba(255,204,51,.45); }
+.trophy-icon { font-size: 26px; }
+.trophy-body { flex: 1; min-width: 0; }
+.trophy-name { font-weight: 800; }
+.trophy-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.trophy-bar { height: 6px; border-radius: 99px; background: rgba(255,255,255,.14); margin-top: 6px; overflow: hidden; }
+.trophy-bar span { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+.trophy-reward { font-weight: 800; color: #ffcc33; white-space: nowrap; }

@@ -4,6 +4,7 @@ import { menuScreen } from './screens/menu';
 import { packsScreen } from './screens/packs';
 import { squadScreen } from './screens/squad';
 import { matchScreen } from './screens/match';
+import { trophiesScreen } from './screens/trophies';
 
 const app = document.getElementById('app')!;
 let current: HTMLElement | null = null;
@@ -16,6 +17,7 @@ function go(screen: string) {
     case 'squad': current = squadScreen(go); break;
     case 'collection': current = squadScreen(go, true); break;
     case 'match': current = matchScreen(go); break;
+    case 'trophies': current = trophiesScreen(go); break;
     default: current = menuScreen(go);
   }
   app.appendChild(current);

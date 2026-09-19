@@ -2,7 +2,8 @@ import { el } from '../ui';
 import { bi, biQuiet } from '../i18n';
 import { buildQuiz, wordsHeardIn } from '../learn';
 import { quizOverlay } from './quiz';
-import { save, persist, squadPlayers, autoSquad, squadRating, recordMatch } from '../state';
+import { claimNewAchievements, type Achievement } from '../achievements';
+import { save, persist, squadPlayers, autoSquad, squadRating, recordMatch, addStars } from '../state';
 import { PLAYERS, CLUBS, type PlayerDef, type Position } from '../data/players';
 import { Match, type Input, type Phase } from '../game/engine';
 import { Renderer } from '../game/render';
@@ -88,25 +89,64 @@ export function matchScreen(go: (s: string) => void): HTMLElement {
   let finished = false;
   const finish = (aborted: boolean) => {
     if (finished) return; finished = true;
-    if (!aborted) {
-      const [h, a] = match.score;
-      const reward = h > a ? 500 : h === a ? 250 : 100;
-      save.coins += reward; persist();
-      recordMatch({ home: h, away: a, opponent: match.away.name, date: new Date().toISOString() });
+    if (aborted) { go('menu'); return; }
+
+    const [h, a] = match.score;
+    const reward = h > a ? 500 : h === a ? 250 : 100;
+    save.coins += reward; persist();
+
+    // Three stars, three different things worth doing: turning up, scoring,
+    // and getting the English right. Losing still earns two if he played well.
+    const baseStars = 1 + (h > 0 ? 1 : 0);
+
+    // Stars are only banked once, whichever way the player leaves.
+    let banked = false;
+    const bank = (stars: number) => {
+      if (banked) return [] as Achievement[];
+      banked = true;
+      addStars(stars);
+      recordMatch({ home: h, away: a, opponent: match.away.name, date: new Date().toISOString(), stars });
+      return claimNewAchievements();
+    };
+
+    const starRow = (n: number) => `<div class="stars">${'★'.repeat(n)}${'☆'.repeat(3 - n)}</div>`;
+
+    const showResult = () => {
       const title = h > a ? bi('YOU WIN!', 'Победа!') : h === a ? bi('A DRAW', 'Ничья') : bi('YOU LOSE', 'Поражение');
       const emoji = h > a ? '🏆' : h === a ? '🤝' : '😢';
-      const word = el('button', 'primary big', bi('Word game', 'Игра со словами'));
+      const word = el('button', 'primary big', bi('Word game — 3rd star', 'Игра со словами — 3-я звезда'));
       word.onclick = () => {
         overlay?.remove();
-        overlay = quizOverlay(buildQuiz(heard, save.coins, reward, h, a), () => {
-          overlay?.remove();
-          go('menu');
+        overlay = quizOverlay(buildQuiz(heard, save.coins, reward, h, a), (_earned, correct) => {
+          const stars = baseStars + (correct === 3 ? 1 : 0);
+          showStars(stars, bank(stars));
         });
         root.appendChild(overlay);
       };
-      const back = el('button', '', bi('Menu', 'В меню')); back.onclick = () => go('menu');
-      showOverlay(`<h2>${emoji} ${title}</h2><div class="score">${h} : ${a}</div><div>${match.home.name} — ${match.away.name}</div><div style="font-size:24px;color:#ffcc33">+${reward} 🪙</div>`, [word, back]);
-    } else go('menu');
+      const back = el('button', '', bi('Skip', 'Пропустить'));
+      back.onclick = () => showStars(baseStars, bank(baseStars));
+      showOverlay(
+        `<h2>${emoji} ${title}</h2><div class="score">${h} : ${a}</div>` +
+        `<div>${match.home.name} — ${match.away.name}</div>` +
+        `<div style="font-size:24px;color:#ffcc33">+${reward} 🪙</div>` +
+        starRow(baseStars), [word, back]);
+    };
+
+    const showStars = (stars: number, fresh: Achievement[]) => {
+      const back = el('button', 'primary big', bi('Menu', 'В меню'));
+      back.onclick = () => go('menu');
+      const trophies = el('button', '', bi('Trophies', 'Трофеи'));
+      trophies.onclick = () => go('trophies');
+      const won = fresh.length
+        ? `<div class="fresh-trophies">${fresh.map(f => `🏅 ${bi(f.en, f.ru)} <b>+${f.reward} 🪙</b>`).join('<br>')}</div>`
+        : '';
+      showOverlay(
+        `<h2>${bi('Match stars', 'Звёзды за матч')}</h2>${starRow(stars)}` +
+        `<div class="stat">${bi(`Total stars: ${save.stars ?? 0}`, `Всего звёзд: ${save.stars ?? 0}`)}</div>${won}`,
+        [back, trophies]);
+    };
+
+    showResult();
   };
 
   const match = new Match(homeDefs, opp.defs, 'My team', opp.name, {

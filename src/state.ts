@@ -8,8 +8,11 @@ export interface SaveData {
   packsOpened: number;
   history?: MatchResult[];        // most recent first, max 10
   vocab?: Record<string, number>; // english word -> strength 0..5 (spaced repetition)
+  stars?: number;                 // lifetime total; unlike coins this only ever grows
+  goalsFor?: number;              // goals scored across all matches
+  achievements?: string[];        // unlocked achievement ids
 }
-export interface MatchResult { home: number; away: number; opponent: string; date: string; }
+export interface MatchResult { home: number; away: number; opponent: string; date: string; stars?: number; }
 
 // Slot layout: 0 GK, 1-4 DEF, 5-7 MID, 8-10 FWD
 export const SLOT_POS: Position[] = ['GK', 'DEF', 'DEF', 'DEF', 'DEF', 'MID', 'MID', 'MID', 'FWD', 'FWD', 'FWD'];
@@ -66,7 +69,15 @@ if (typeof document !== 'undefined') {
 
 export function resetSave() { save = defaultSave(); persist(); }
 
+export const totalStars = () => save.stars ?? 0;
+
+export function addStars(n: number) {
+  save.stars = (save.stars ?? 0) + n;
+  persist();
+}
+
 export function recordMatch(r: MatchResult) {
+  save.goalsFor = (save.goalsFor ?? 0) + r.home;
   save.history = [r, ...(save.history ?? [])].slice(0, 10);
   if (r.home > r.away) save.wins++; else if (r.home === r.away) save.draws++; else save.losses++;
   persist();

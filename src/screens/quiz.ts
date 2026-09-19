@@ -10,10 +10,11 @@ import { COINS_PER_CORRECT, recordAnswer, learnedCount, WORDS, type Question } f
 // costs nothing, it just earns no coin and shows the right answer. The aim is
 // that the child always wants to play it, not that they are tested.
 
-export function quizOverlay(questions: Question[], onDone: (earned: number) => void): HTMLElement {
+export function quizOverlay(questions: Question[], onDone: (earned: number, correct: number) => void): HTMLElement {
   const root = el('div', 'overlay quiz');
   let i = 0;
   let earned = 0;
+  let correct = 0;
 
   const show = () => {
     root.innerHTML = '';
@@ -45,6 +46,7 @@ export function quizOverlay(questions: Question[], onDone: (earned: number) => v
         const right = idx === q.answer;
         if (right) {
           b.classList.add('right');
+          correct++;
           earned += COINS_PER_CORRECT;
           save.coins += COINS_PER_CORRECT;
           persist();
@@ -72,10 +74,13 @@ export function quizOverlay(questions: Question[], onDone: (earned: number) => v
     root.appendChild(el('h2', '', bi('Word game', 'Игра со словами')));
     root.appendChild(el('div', 'score', `+${earned} 🪙`));
     root.appendChild(el('div', 'stat', bi(
+      `Correct: ${correct} of ${questions.length}`,
+      `Верных: ${correct} из ${questions.length}`)));
+    root.appendChild(el('div', 'stat', bi(
       `Words learned: ${learnedCount()} of ${WORDS.length}`,
       `Выучено слов: ${learnedCount()} из ${WORDS.length}`)));
     const done = el('button', 'primary big', bi('Continue', 'Продолжить'));
-    done.onclick = () => onDone(earned);
+    done.onclick = () => onDone(earned, correct);
     root.appendChild(done);
   };
 

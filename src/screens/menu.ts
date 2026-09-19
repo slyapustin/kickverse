@@ -1,6 +1,7 @@
 import { el } from '../ui';
 import { bi } from '../i18n';
 import { learnedCount, WORDS } from '../learn';
+import { ACHIEVEMENTS, unlockedCount } from '../achievements';
 import { save, squadRating, resetSave, isSaveHealthy } from '../state';
 import { setCommentatorEnabled, isCommentatorEnabled } from '../audio/commentator';
 import { menuIntro } from './intro';
@@ -22,6 +23,8 @@ export function menuScreen(go: (s: string) => void): HTMLElement {
   inner.appendChild(stats);
   inner.appendChild(record);
   inner.appendChild(el('div', 'stat words-stat',
+    `⭐ ${bi(`Stars: ${save.stars ?? 0}`, `Звёзды: ${save.stars ?? 0}`)} &nbsp;·&nbsp; 🏅 ${bi(`Trophies: ${unlockedCount()}/${ACHIEVEMENTS.length}`, `Трофеи: ${unlockedCount()} из ${ACHIEVEMENTS.length}`)}`));
+  inner.appendChild(el('div', 'stat words-stat',
     `📖 ${bi(`Words learned: ${learnedCount()} / ${WORDS.length}`, `Выучено слов: ${learnedCount()} из ${WORDS.length}`)}`));
   if (!isSaveHealthy()) {
     const warn = el('div', 'stat', bi('Progress is not being saved — check browser storage.', '⚠️ Прогресс не сохраняется — проверь хранилище браузера.'));
@@ -33,12 +36,13 @@ export function menuScreen(go: (s: string) => void): HTMLElement {
   const packs = el('button', 'gold', `🎁 ${bi('Open packs', 'Открыть паки')}`); packs.onclick = () => go('packs');
   const squad = el('button', '', `👥 ${bi('My team', 'Мой состав')}`); squad.onclick = () => go('squad');
   const col = el('button', '', `🃏 ${bi('Collection', 'Коллекция')}`); col.onclick = () => go('collection');
+  const trophies = el('button', '', `🏅 ${bi('Trophies', 'Трофеи')}`); trophies.onclick = () => go('trophies');
   const voice = el('button', '', isCommentatorEnabled() ? `🔊 ${bi('Commentary: on', 'Комментатор: вкл')}` : `🔇 ${bi('Commentary: off', 'Комментатор: выкл')}`);
   voice.onclick = () => {
     setCommentatorEnabled(!isCommentatorEnabled());
     voice.innerHTML = isCommentatorEnabled() ? `🔊 ${bi('Commentary: on', 'Комментатор: вкл')}` : `🔇 ${bi('Commentary: off', 'Комментатор: выкл')}`;
   };
-  btns.append(play, packs, squad, col, voice);
+  btns.append(play, packs, squad, col, trophies, voice);
   inner.appendChild(btns);
   const hist = save.history ?? [];
   if (hist.length) {
