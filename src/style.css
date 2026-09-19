@@ -147,3 +147,6 @@ html, body { -webkit-touch-callout: none; -webkit-user-select: none; user-select
 .chip { padding: 10px 18px; font-size: 15px; border-radius: 999px; min-height: 44px; }
 .chip.on { background: var(--accent); color: #06210f; font-weight: 800; }
 .card.offpos { opacity: .5; }
+
+/* Build stamp: lets us confirm which version an iPad actually loaded. */
+.version { font-size: 12px; color: var(--muted); opacity: .55; letter-spacing: .5px; }

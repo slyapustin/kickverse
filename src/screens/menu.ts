@@ -38,6 +38,8 @@ export function menuScreen(go: (s: string) => void): HTMLElement {
   const reset = el('button', '', 'Сбросить прогресс'); reset.style.fontSize = '13px'; reset.style.padding = '8px 12px'; reset.style.opacity = '.6';
   let armed = false;
   reset.onclick = () => { if (!armed) { armed = true; reset.textContent = 'Точно сбросить? Нажми ещё раз'; reset.style.opacity = '1'; setTimeout(() => { armed = false; reset.textContent = 'Сбросить прогресс'; reset.style.opacity = '.6'; }, 3000); return; } resetSave(); go('menu'); };
+  const ver = el('div', 'version', `v ${__BUILD_ID__} · ${__BUILD_TIME__} UTC`);
+  root.appendChild(ver);
   root.appendChild(reset);
   (root as any)._cleanup = () => (intro as any)._cleanup?.();
   return root;
