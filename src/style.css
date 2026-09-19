@@ -150,3 +150,10 @@ html, body { -webkit-touch-callout: none; -webkit-user-select: none; user-select
 
 /* Build stamp: lets us confirm which version an iPad actually loaded. */
 .version { font-size: 12px; color: var(--muted); opacity: .55; letter-spacing: .5px; }
+
+/* Generated player portrait on the card. */
+.card .face-img {
+  width: 64%; aspect-ratio: 1; border-radius: 50%; object-fit: cover;
+  border: 3px solid rgba(0,0,0,.28); box-shadow: 0 4px 12px rgba(0,0,0,.35);
+  background: #1b1b22;
+}

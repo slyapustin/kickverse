@@ -1,21 +1,10 @@
 import { HALF_L, HALF_W, type Match, type Player } from './engine';
-import { drawFigure, pickHair, pickSkin } from './figure';
+import { drawFigure } from './figure';
+import { faceFor } from '../data/faces';
 
-// Skin/hair are derived from the player id so a given footballer always looks
-// the same, in the match and on the menu.
-const lookCache = new Map<string, { skin: string; hair: string }>();
-function lookOf(p: Player) {
-  let v = lookCache.get(p.def.id);
-  if (!v) {
-    let n = 0;
-    for (let i = 0; i < p.def.id.length; i++) n = (n * 31 + p.def.id.charCodeAt(i)) | 0;
-    v = { skin: pickSkin(n), hair: pickHair(n >> 3) };
-    lookCache.set(p.def.id, v);
-  }
-  return v;
-}
+// A player looks the same on the pitch as on his card.
+function lookOf(p: Player) { return faceFor(p.def.id); }
 
-// Broadcast-style side camera: we look across the pitch from the near touchline, slightly elevated.
 export class Renderer {
   ctx: CanvasRenderingContext2D;
   W = 0; H = 0; dpr = 1;
@@ -169,7 +158,7 @@ export class Renderer {
     drawFigure(c, {
       sx: g.sx, sy: g.sy, s,
       kit, kit2: shorts, skin: look.skin, hair: look.hair,
-      num: p.idx + 1, gait: p.animT * 6,
+      num: p.idx + 1, bald: look.bald, gait: p.animT * 6,
       speed: Math.hypot(p.vx, p.vz), dir: Math.sign(p.vx) || m.home.attackDir,
     });
     c.restore();

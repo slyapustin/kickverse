@@ -1,5 +1,6 @@
 import { PLAYERS } from '../data/players';
-import { drawFigure, pickHair, pickSkin } from '../game/figure';
+import { drawFigure } from '../game/figure';
+import { faceFor } from '../data/faces';
 
 // Attract scene for the main menu: cartoon players chase a loose ball around the
 // centre circle. Same stick-figure look as the match renderer, but self-contained
@@ -12,17 +13,18 @@ interface Runner {
   x: number; z: number; vx: number; vz: number;
   kit: string; kit2: string; num: number;
   label: string | null; animT: number; cooldown: number; off: number;
-  skin: string; hair: string;
+  skin: string; hair: string; bald?: boolean;
 }
 
 interface SceneBall { x: number; z: number; y: number; vx: number; vz: number; vy: number; }
 
 // Van Dijk is the one the scene is built around; the rest are whoever else is
 // highly rated, so the cameo names change as the roster grows.
-function pickNames(): string[] {
+function pickCast() {
   const dijk = PLAYERS.find(p => p.name.includes('ван Дейк'));
   const others = PLAYERS.filter(p => p !== dijk).sort((a, b) => b.rating - a.rating).slice(0, 5);
-  return [dijk ? 'ван Дейкс' : others[0].short, ...others.map(p => p.short)];
+  const cast = dijk ? [dijk, ...others] : others;
+  return cast.map((p, i) => ({ label: i === 0 && dijk ? 'ван Дейкс' : p.short, look: faceFor(p.id) }));
 }
 
 export function menuIntro(): HTMLCanvasElement {
@@ -39,7 +41,7 @@ export function menuIntro(): HTMLCanvasElement {
     c.setTransform(dpr, 0, 0, dpr, 0, 0);
   };
 
-  const names = pickNames();
+  const cast = pickCast();
   const ball: SceneBall = { x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0 };
   const runners: Runner[] = [];
   const reset = () => {
@@ -55,10 +57,11 @@ export function menuIntro(): HTMLCanvasElement {
         kit: i % 2 === 0 ? '#2b8cff' : '#ff3b3b',
         kit2: i % 2 === 0 ? '#ffffff' : '#ffe14d',
         num: 2 + i * 3,
-        label: i < 2 ? names[i] ?? null : null,
+        label: i < 2 ? cast[i]?.label ?? null : null,
         animT: Math.random() * 6, cooldown: 0,
         off: ang,
-        skin: pickSkin(i * 5 + 1), hair: pickHair(i * 3 + 2),
+        skin: cast[i]?.look.skin ?? '#e0a870', hair: cast[i]?.look.hair ?? '#1b1209',
+        bald: cast[i]?.look.bald,
       });
     }
   };
@@ -126,7 +129,7 @@ export function menuIntro(): HTMLCanvasElement {
     drawFigure(c, {
       sx: g.sx, sy: g.sy, s,
       kit: p.kit, kit2: p.kit2, skin: p.skin, hair: p.hair,
-      num: p.num, gait: p.animT * 6, speed, dir: Math.sign(p.vx) || 1,
+      num: p.num, bald: p.bald, gait: p.animT * 6, speed, dir: Math.sign(p.vx) || 1,
     });
     if (p.label) {
       c.font = `bold ${Math.max(9, s * 0.34)}px sans-serif`;

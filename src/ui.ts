@@ -1,5 +1,6 @@
 import { COUNTRIES, CLUBS, POS_SHORT, rarityOf, type PlayerDef } from './data/players';
 import { save } from './state';
+import { faceFor, faceUrl } from './data/faces';
 
 export function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', html = ''): HTMLElementTagNameMap[K] {
   const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; return e;
@@ -13,7 +14,8 @@ export function cardEl(p: PlayerDef, count = 0): HTMLElement {
       <div><div class="rating">${p.rating}</div><div class="pos">${POS_SHORT[p.pos]}</div></div>
       <div style="font-size:26px">${c.flag}</div>
     </div>
-    <div class="face">${p.face}</div>
+    <img class="face-img" src="${faceUrl(faceFor(p.id))}" alt="" loading="lazy"
+         onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'face',textContent:'${p.face}'}))">
     <div class="name">${p.name}</div>
     <div class="meta"><span class="club" style="background:${club.color};border-color:${club.color2}"></span><span style="font-size:11px;font-weight:700">${club.name}</span></div>
     ${count > 1 ? `<div class="dup">×${count}</div>` : ''}`;

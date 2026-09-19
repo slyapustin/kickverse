@@ -45,6 +45,7 @@ export interface FigureOpts {
   skin: string;
   hair: string;
   num?: number;
+  bald?: boolean;
   gait: number;      // animation phase, radians
   speed: number;     // world speed; 0 = standing still
   dir: number;       // -1 facing/leaning left, +1 right
@@ -172,6 +173,7 @@ export function drawFigure(c: CanvasRenderingContext2D, o: FigureOpts) {
   c.fillStyle = skinD;                                  // jaw shadow on the lean side
   c.beginPath(); c.ellipse(headR * 0.34, headY + headR * 0.18, headR * 0.5, headR * 0.78, 0, 0, 6.28); c.fill();
   // Hair: cap over the top, slightly forward of the crown.
+  if (o.bald) { c.restore(); return; }
   c.fillStyle = o.hair;
   c.beginPath();
   c.ellipse(0, headY - headR * 0.18, headR * 0.98, headR * 0.86, 0, Math.PI, 0);
